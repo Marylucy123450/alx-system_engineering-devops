@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Display all active IPv4 IPs
+
+
+# ifconfig -a: display information about all network interfaces, both active and inactive.
+# grep inet: filters output to only include lines that contain the term "inet,"
+# which typically indicates an IPv4 address.
+# cut -d: -f2: uses ":" as a delimiter and extracts the second field from each line.
+# In the context of IPv4 addresses in the output, this field contains the actual IP address.
+# cut -d" " -f1:uses a space (" ") as a delimiter and extracts the first field from each line.
+# This is done to further refine the output and remove any additional information that
+# might be present on the same line.
+
+ifconfig -a | grep inet | cut -d: -f2 | cut -d" "  -f1

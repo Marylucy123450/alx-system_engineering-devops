@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Bash script to ping an IP address
+
+# Check if an argument is provided
+if [ "$#" -eq 0 ]; then
+    echo "Usage: 5-is_the_host_on_the_network {IP_ADDRESS}"
+    exit 1
+fi
+
+# Extract the IP address from the argument
+ip_address=$1
+
+# Ping the IP address 5 times and display the results
+ping -c 5 "$ip_address"

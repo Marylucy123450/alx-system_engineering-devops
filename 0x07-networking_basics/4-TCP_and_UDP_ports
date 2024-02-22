@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# netstat: The command-line utility for displaying network-related information.
+# -l:display only listening sockets. those are waiting for incoming connections.
+# --program:display the PID and name of the program which each socket belongs.
+
+netstat -l --program
