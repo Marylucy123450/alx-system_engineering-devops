@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# Configure your Nginx server so that /redirect_me is redirecting to another page
+
+# Define the string and redirection configuration
+STRING="Hello World!"
+REDIRECT="location /redirect_me {\n\treturn 301 https://youtu.be/dQw4w9WgXcQ; \n}"
+
+# Install Nginx and allow HTTP traffic
+apt-get -y update
+apt-get -y install nginx
+ufw allow 'Nginx HTTP'
+
+# Create the index file with the string
+echo "$STRING" > /var/www/html/index.nginx-debian.html
+
+# Find the appropriate location block in the Nginx configuration file and insert the redirection
+sed -i "/^\s*location \/ {/a $REDIRECT" /etc/nginx/sites-available/default
+
+# Restart Nginx
+service nginx restart

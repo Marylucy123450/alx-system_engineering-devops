@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Updates web server to run Nginx as the nginx user listening on port 8080
+
+# Stop nginx service
+service nginx stop
+
+# Replace the coomented-out user directive in the nginx.conf file with "user nginx"
+sed -i "s/#user www-data/user nginx/" /etc/nginx/nginx.conf
+
+# Replace port 80 with port 8080 in the default site configuration file
+sed -i "s/80/8080/g" /etc/nginx/sites-available/default
+
+# Change permissions of the nginx.conf file to 644
+chmod 644 /etc/nginx/nginx.conf
+
+# Start the Nginx service as the nginx user
+sudo -u nginx service nginx start

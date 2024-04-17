@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+# Configure Nginx so that its HTTP response contains a custom header (on web-01 and web-02)
+
+# Update package list and install Nginx
+sudo apt-get -y update
+sudo apt-get -y purge nginx
+sudo apt -y autoremove
+sudo apt-get -y install nginx
+
+# Create index page
+sudo mkdir -p /var/www/html
+echo "Hello World!" | sudo tee /var/www/html/index.nginx-debian.html >/dev/null
+
+# Create custom 404 page
+echo "Ceci n'est pas une page" | sudo tee /usr/share/nginx/html/custom_404.html >/dev/null
+
+# truncate the file to size 0, effectively clearing all its contents
+sudo truncate -s 0 /etc/nginx/sites-available/default
+
+# Define variable for Nginx configuration file
+NGINX_CONF="/etc/nginx/sites-available/default"
+
+# Add custom header directly inside server block
+sudo tee -a "$NGINX_CONF" >/dev/null <<EOF
+# Default server configuration
+#
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+
+    root /var/www/html;
+    index index.html index.htm index.nginx-debian.html;
+
+    server_name _;
+
+    # Add custom header
+    add_header X-Served-By \$hostname;
+
+    # Add redirect for /redirect_me
+    location /redirect_me {
+        return 301 https://github.com/Isaac-Ndirangu-Muturi-749;
+    }
+
+    # Add custom error page redirection
+    error_page 404 /custom_404.html;
+    location = /custom_404.html {
+        root /usr/share/nginx/html;
+        internal;
+    }
+}
+EOF
+
+# Remove existing symbolic link to default configuration
+sudo rm -f /etc/nginx/sites-enabled/default
+
+# Create a new symbolic link to enable the configuration
+sudo ln -s "$NGINX_CONF" /etc/nginx/sites-enabled/
+
+# Testing configurations for syntax errors
+sudo nginx -t
+
+# Restart or start Nginx service
+if [ "$(pgrep -c nginx)" -le 0 ]; then
+    sudo service nginx start
+else
+    sudo service nginx restart
+fi

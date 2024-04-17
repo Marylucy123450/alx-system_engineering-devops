@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+#  Install and configure HAproxy on the lb-01 server
+
+# Purge existing HAProxy installation and related directories
+sudo apt-get purge -y haproxy
+sudo rm -rf /var/lib/haproxy/dev/
+sudo apt -y autoremove
+
+# Installation of ubuntu-focal HAProxy
+apt-get -y update
+apt-get install --no-install-recommends software-properties-common
+add-apt-repository -y ppa:vbernat/haproxy-2.8
+apt-get install -y haproxy=2.8.\*
+
+# Configure HAProxy to share resources between two servers
+FILEPATH="/etc/haproxy/haproxy.cfg"
+CONTENT="
+frontend http
+    bind *:80
+    mode http
+    default_backend web-backend
+
+backend web-backend
+    balance roundrobin
+    server 339243-web-01 35.153.193.23:80 check
+    server 339243-web-02 54.146.94.67:80 check"
+
+
+echo "$CONTENT" | sudo tee -a "$FILEPATH"
+
+# Enable HAProxy to be started with init script
+echo "ENABLED=1" | sudo tee /etc/default/haproxy
+
+# Restart HAProxy
+service haproxy restart

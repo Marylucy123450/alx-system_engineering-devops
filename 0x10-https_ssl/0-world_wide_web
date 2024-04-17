@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# Bash script that will display information about subdomains.
+
+get_subdomain_info() {
+    local domain="$1"
+    local sub_domain="$2"
+
+    # Fetching information about the subdomain
+    record_type=$(dig "$sub_domain.$domain" | grep -A1 'ANSWER SECTION' | tail -1 | awk '{print $4}')
+    destination=$(dig "$sub_domain.$domain" | grep -A1 'ANSWER SECTION' | tail -1 | awk '{print $5}')
+    echo "The subdomain $sub_domain is a $record_type record and points to $destination"
+}
+
+# Main script
+domain="$1"
+subdomain="$2"
+
+if [ "$#" = 1 ]; then
+    # List of default subdomains
+    sub_domains=("www" "lb-01" "web-01" "web-02")
+    for sub_domain in "${sub_domains[@]}"; do
+        get_subdomain_info "$domain" "$sub_domain"
+    done
+elif [ "$#" = 2 ]; then
+    get_subdomain_info "$domain" "$subdomain"
+fi

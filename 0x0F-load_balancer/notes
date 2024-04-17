@@ -1,0 +1,264 @@
+username=ubuntu
+server_ip=$2
+ssh_key=~/.ssh/id_rsa
+file_path=$1
+scp -i "$ssh_key" -o StrictHostKeyChecking=no "$file_path" "$username@$server_ip":~/
+
+
+./transfer_file.sh 0-custom_http_response_header 35.153.193.23
+
+./transfer_file.sh 1-install_load_balancer 34.207.221.74
+
+curl -sI 100.27.4.237 | grep X-Served-By
+curl -sI 54.146.94.67
+
+
+ssh ubuntu@35.153.193.23
+
+sudo apt-get -y purge nginx
+
+/etc/nginx/nginx.conf
+
+sudo cp /etc/nginx/nginx.conf /etc/nginx/nginx.conf.original
+
+
+
+
+
+
+
+
+user www-data;
+worker_processes auto;
+pid /run/nginx.pid;
+include /etc/nginx/modules-enabled/*.conf;
+
+events {
+        worker_connections 768;
+        # multi_accept on;
+}
+
+http {
+
+        ##
+        # Basic Settings
+        ##
+
+        sendfile on;
+        tcp_nopush on;
+        tcp_nodelay on;
+        keepalive_timeout 65;
+        types_hash_max_size 2048;
+        # server_tokens off;
+
+        # server_names_hash_bucket_size 64;
+        # server_name_in_redirect off;
+
+        include /etc/nginx/mime.types;
+        default_type application/octet-stream;
+
+        ##
+        # SSL Settings
+        ##
+
+        ssl_protocols TLSv1 TLSv1.1 TLSv1.2 TLSv1.3; # Dropping SSLv3, ref: POODLE
+        ssl_prefer_server_ciphers on;
+
+        ##
+        # Logging Settings
+        ##
+
+        access_log /var/log/nginx/access.log;
+        error_log /var/log/nginx/error.log;
+
+        ##
+        # Gzip Settings
+        ##
+
+        gzip on;
+
+        # gzip_vary on;
+        # gzip_proxied any;
+        # gzip_comp_level 6;
+        # gzip_buffers 16 8k;
+        # gzip_http_version 1.1;
+        # gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
+
+        ##
+        # Virtual Host Configs
+        ##
+
+        include /etc/nginx/conf.d/*.conf;
+        include /etc/nginx/sites-enabled/*;
+}
+
+
+#mail {
+#       # See sample authentication script at:
+#       # http://wiki.nginx.org/ImapAuthenticateWithApachePhpScript
+# 
+#       # auth_http localhost/auth.php;
+#       # pop3_capabilities "TOP" "USER";
+#       # imap_capabilities "IMAP4rev1" "UIDPLUS";
+# 
+#       server {
+#               listen     localhost:110;
+#               protocol   pop3;
+#               proxy      on;
+#       }
+# 
+#       server {
+#               listen     localhost:143;
+#               protocol   imap;
+#               proxy      on;
+#       }
+#}
+
+
+
+
+
+./transfer_file.sh 1-install_load_balancer 54.173.80.242
+
+ssh ubuntu@35.153.193.23
+
+curl -Is 54.173.80.242
+
+curl -sI 35.153.193.23 | grep X-Served-By
+
+
+echo -e "\thttp-response add-header X-Served-By %[srv_name]" | sudo tee -a /etc/haproxy/haproxy.cfg > /dev/null
+
+
+sudo mv /etc/nginx/sites-available/default.original /etc/nginx/sites-available/default
+
+curl -sI http://127.0.0.1 | grep X-Served-By
+
+/etc/haproxy/haproxy.cfg
+
+
+
+sudo service nginx restart
+
+
+sudo mv /etc/haproxy/haproxy.cfg.original /etc/haproxy/haproxy.cfg
+
+sudo service haproxy status
+
+curl -Is 127.0.0.1
+
+
+# Default server configuration
+#
+server {
+        listen 80 default_server;
+        listen [::]:80 default_server;
+
+        root /var/www/html;
+        index index.html index.htm index.nginx-debian.html;
+
+        server_name _;
+
+        # Add custom header
+        add_header X-Served-By $hostname;
+
+        # Add redirect for /redirect_me
+        location /redirect_me {
+            return 301 https://github.com/Isaac-Ndirangu-Muturi-749;
+        }
+
+        # Add custom error page redirection
+        error_page 404 /custom_404.html;
+        location = /custom_404.html {
+            root /usr/share/nginx/html;
+            internal;
+        }
+}
+
+
+sudo apt-get purge -y haproxy
+curl -Is 127.0.0.1
+./transfer_file.sh 1-install_load_balancer 34.207.221.74
+sudo apt-get purge haproxy
+
+
+
+#!/usr/bin/env bash
+# Configure Nginx so that its HTTP response contains a custom header (on web-01 and web-02)
+
+# Update package list and install Nginx
+sudo apt-get -y update
+sudo apt-get -y purge nginx
+sudo apt-get -y install nginx
+
+mkdir -p /var/www/html
+# Create index page
+echo "Hello World!" > /var/www/html/index.nginx-debian.html
+
+# Create custom 404 page
+echo "Ceci n'est pas une page" > /usr/share/nginx/html/custom_404.html
+
+# Define variable for Nginx configuration file
+NGINX_CONF="/etc/nginx/sites-available/default"
+
+sudo tee -a "$NGINX_CONF" >/dev/null <<EOF
+# Default server configuration
+#
+http {
+    server {
+        listen 80 default_server;
+        listen [::]:80 default_server;
+
+        root /var/www/html;
+        index index.html index.htm index.nginx-debian.html;
+
+        server_name _;
+
+        # Add custom header
+        add_header X-Served-By $hostname;
+
+        # Add redirect for /redirect_me
+        location /redirect_me {
+            return 301 https://github.com/Isaac-Ndirangu-Muturi-749;
+        }
+
+        # Add custom error page redirection
+        error_page 404 /custom_404.html;
+        location = /custom_404.html {
+            root /usr/share/nginx/html;
+            internal;
+        }
+    }
+}
+
+EOF
+
+# Testing configurations for syntax errors
+sudo nginx -t -c /etc/nginx/sites-available/default
+
+# Restart or start HAProxy service
+if [ "$(pgrep -c nginx)" -le 0 ]; then
+	sudo service nginx start
+else
+	sudo service nginx restart
+fi
+
+
+ ./transfer_file.sh 0-custom_http_response_header 35.153.193.23
+
+curl -sI 127.0.0.1 | grep X-Served-By
+
+# Restart or start HAProxy service
+if [ "$(pgrep -c haproxy)" -le 0 ]; then
+	sudo service haproxy start
+else
+	sudo service haproxy restart
+fi
+
+./transfer_file.sh 1-install_load_balancer 34.207.221.74
+
+
+curl -sI 35.153.193.23 | grep X-Served-By
+
+
+sudo rm -rf /var/lib/haproxy/dev/
