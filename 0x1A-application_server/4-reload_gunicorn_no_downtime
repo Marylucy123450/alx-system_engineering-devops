@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Kill gunicorn worker processe gracefully, with no downtime
+
+# Find the PID of the top process listed in the output
+# Send a HUP signal to the top process PID to reload gracefully
+kill -HUP "$(ps -C gunicorn fch -o pid | head -n 1)"
